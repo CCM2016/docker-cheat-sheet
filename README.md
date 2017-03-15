@@ -1,6 +1,6 @@
 # Docker Cheat Sheet
 
-**Want to improve this cheat sheet?  See the [Contributing](#contributing) section!**
+**Want to improve this cheat sheet? Feel free to make pull requests**
 
 ## Table of Contents
 
@@ -13,6 +13,7 @@
 * [Networks](#networks)
 * [Registry and Repository](#registry--repository)
 * [Dockerfile](#dockerfile)
+* [Combining Dockers: docker-compose](#compose)
 * [Layers](#layers)
 * [Links](#links)
 * [Volumes](#volumes)
@@ -29,6 +30,8 @@
 Developers can get going quickly by starting with one of the 13,000+ apps available on Docker Hub. Docker manages and tracks changes and dependencies, making it easier for sysadmins to understand how the apps that developers build work. And with Docker Hub, developers can automate their build pipeline and share artifacts with collaborators through public or private repositories.
 
 Docker helps developers build and ship higher-quality applications, faster." -- [What is Docker](https://www.docker.com/what-docker#copy1)
+
+An awesome list of awesome [docker-resources](https://github.com/bcicen/awesome-docker)
 
 ## Prerequisites
 
@@ -353,6 +356,51 @@ Here are some common text editors and their syntax highlighting modules you coul
 * [Michael Crosby](http://crosbymichael.com/) has some more [Dockerfiles best practices](http://crosbymichael.com/dockerfile-best-practices.html) / [take 2](http://crosbymichael.com/dockerfile-best-practices-take-2.html).
 * [Building Good Docker Images](http://jonathan.bergknoff.com/journal/building-good-docker-images) / [Building Better Docker Images](http://jonathan.bergknoff.com/journal/building-better-docker-images)
 * [Managing Container Configuration with Metadata](https://speakerdeck.com/garethr/managing-container-configuration-with-metadata)
+
+## Combining Dockers <a name="compose"></a>
+
+You can combine multiple dockers into one, by writing a `docker-compose.yml` file. This example starts nginx, graylog, mongodb and elastic search:
+```
+version: '3'
+services:
+  nginx:
+    image: nginx
+    volumes:
+     - ~/Programming/Projects/log/nginx/:/etc/nginx/
+     - ~/Programming/Projects/log/nginx/html/:/var/www/
+    ports:
+      - "8080:443"
+  logstash:
+    image: logstash
+    command: "-f /usr/share/logstash/pipeline/logstash-filter.conf --config.reload.automatic"
+    volumes:
+      - ~/Programming/Projects/log/pipeline/:/usr/share/logstash/pipeline/
+  mongo:
+    image: "mongo:2"
+    volumes:
+      - ~/Programming/Projects/log/graylog/data/mongo:/data/db
+  elasticsearch:
+    image: "elasticsearch:2"
+    command: "elasticsearch -Des.cluster.name='graylog'"
+    volumes:
+      - ~/Programming/Projects/log/graylog/data/elasticsearch:/usr/share/elasticsearch/data
+  graylog:
+    image: "graylog2/server:2.2.1-1"
+    volumes:
+      - ~/Programming/Projects/log/graylog/data/journal:/usr/share/graylog/data/journal
+      - ~/Programming/Projects/log/graylog/config:/usr/share/graylog/data/config
+    environment:
+      GRAYLOG_PASSWORD_SECRET: ${GRAYLOG_PASSWORD_SECRET}
+      GRAYLOG_ROOT_PASSWORD_SHA2: ${GRAYLOG_ROOT_PASSWORD_SHA2}
+      GRAYLOG_WEB_ENDPOINT_URI: http://127.0.0.1:9000/api
+    depends_on:
+     - mongo
+     - elasticsearch
+    ports:
+     - "9000:9000"
+     - "12201/udp:12201/udp"
+     - "5555:5555"
+```
 
 ## Layers
 

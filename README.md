@@ -360,7 +360,7 @@ Here are some common text editors and their syntax highlighting modules you coul
 ## Combining Dockers <a name="compose"></a>
 
 You can combine multiple dockers into one, by writing a `docker-compose.yml` file. This example starts nginx, graylog, mongodb and elastic search:
-```
+```yaml
 version: '3'
 services:
   nginx:
